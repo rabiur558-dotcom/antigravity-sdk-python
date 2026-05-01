@@ -22,9 +22,9 @@ from unittest import mock
 from absl.testing import absltest
 from google.protobuf import json_format
 
-from antigravity_harness import localharness_pb2
 from google.antigravity import types
 from google.antigravity.connections import local_connection
+from google.antigravity.connections import localharness_pb2
 from google.antigravity.hooks import hook_runner
 from google.antigravity.hooks import hooks as hooks_base
 from google.antigravity.tools import tool_runner

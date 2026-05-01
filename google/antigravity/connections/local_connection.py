@@ -29,9 +29,9 @@ from google.genai import types as genai_types
 from google.protobuf import json_format
 import websockets
 
-from antigravity_harness import localharness_pb2
 from google.antigravity import types
 from google.antigravity.connections import connection
+from google.antigravity.connections import localharness_pb2
 from google.antigravity.hooks import hook_runner as h_runner
 from google.antigravity.hooks import hooks
 from google.antigravity.tools import tool_runner as t_runner

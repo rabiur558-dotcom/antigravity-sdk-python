@@ -25,9 +25,9 @@ import asyncio
 import logging
 import tempfile
 
-from google.antigravity import types
+
 from google.antigravity.agent import Agent
-from google.antigravity.agent import AgentConfig
+from google.antigravity.connections.local_connection import LocalAgentConfig
 
 
 async def main():
@@ -38,9 +38,9 @@ async def main():
 
   # --- Session 1: establish context ---
   print("\n=== Session 1: establishing context ===")
-  config = AgentConfig(
+  config = LocalAgentConfig(
       system_instructions="You are a helpful assistant.",
-      session_config=types.SessionConfig(save_dir=save_dir),
+      save_dir=save_dir,
   )
   async with Agent(config) as agent:
     response = await agent.chat(
@@ -55,12 +55,10 @@ async def main():
 
   # --- Session 2: resume and verify recall ---
   print("=== Session 2: resuming and verifying recall ===")
-  config = AgentConfig(
+  config = LocalAgentConfig(
       system_instructions="You are a helpful assistant.",
-      session_config=types.SessionConfig(
-          conversation_id=conversation_id,
-          save_dir=save_dir,
-      ),
+      conversation_id=conversation_id,
+      save_dir=save_dir,
   )
   async with Agent(config) as agent:
     response = await agent.chat(

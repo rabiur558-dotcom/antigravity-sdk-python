@@ -18,6 +18,7 @@ import asyncio
 import logging
 from google.antigravity import types
 import google.antigravity.agent as agent_module
+from google.antigravity.connections.local_connection import LocalAgentConfig
 from google.antigravity.examples import example_policies
 
 
@@ -69,7 +70,7 @@ async def main():
   )
 
   print("Creating agent with advanced templated instructions...")
-  config = agent_module.AgentConfig(
+  config = LocalAgentConfig(
       system_instructions=templated_si,
       tools=[check_vulnerability_database],
       capabilities=types.CapabilitiesConfig(),

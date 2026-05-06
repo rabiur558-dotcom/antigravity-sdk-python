@@ -894,11 +894,18 @@ class LocalConnectionStrategyConfigTest(unittest.TestCase):
   no subprocess or websocket I/O is triggered.
   """
 
+  def setUp(self):
+    super().setUp()
+    self.patcher = mock.patch(
+        "google.antigravity.connections.local_connection._get_default_binary_path",
+        return_value="/fake/binary",
+    )
+    self.patcher.start()
+    self.addCleanup(self.patcher.stop)
+
   def _make_strategy(self, **kwargs):
-    """Creates a LocalConnectionStrategy with the given kwargs and a dummy binary_path."""
-    defaults = {"binary_path": "/fake/binary"}
-    defaults.update(kwargs)
-    return local_connection.LocalConnectionStrategy(**defaults)
+    """Creates a LocalConnectionStrategy with the given kwargs."""
+    return local_connection.LocalConnectionStrategy(**kwargs)
 
   def test_default_config_produces_valid_harness_config(self):
     """Verifies that a strategy with all defaults produces a well-formed proto.
@@ -1095,9 +1102,7 @@ class LocalConnectionStrategyConfigTest(unittest.TestCase):
     workspace directory.
     """
     strategy = self._make_strategy(
-        session_config=types.SessionConfig(
-            workspaces=["/home/user/project", "/tmp/scratch"]
-        ),
+        workspaces=["/home/user/project", "/tmp/scratch"]
     )
     config = strategy._build_harness_config()
     self.assertEqual(len(config.workspaces), 2)
@@ -1127,9 +1132,7 @@ class LocalConnectionStrategyConfigTest(unittest.TestCase):
     distinct from None (which also means no workspaces but is implicit).
     How: Pass empty list via session_config and assert empty repeated field.
     """
-    strategy = self._make_strategy(
-        session_config=types.SessionConfig(workspaces=[])
-    )
+    strategy = self._make_strategy(workspaces=[])
     config = strategy._build_harness_config()
     self.assertEqual(len(config.workspaces), 0)
 
@@ -1230,9 +1233,7 @@ class LocalConnectionStrategyConfigTest(unittest.TestCase):
     How: Set conversation_id via session_config and assert it appears
     on the proto.
     """
-    strategy = self._make_strategy(
-        session_config=types.SessionConfig(conversation_id="resume-123")
-    )
+    strategy = self._make_strategy(conversation_id="resume-123")
     config = strategy._build_harness_config()
     self.assertEqual(config.cascade_id, "resume-123")
 
@@ -1255,10 +1256,8 @@ class LocalConnectionStrategyConfigTest(unittest.TestCase):
     How: Set save_dir via session_config and assert it appears on
     the strategy's stored config for InputConfig construction.
     """
-    strategy = self._make_strategy(
-        session_config=types.SessionConfig(save_dir="/tmp/state"),
-    )
-    self.assertEqual(strategy._session_config.save_dir, "/tmp/state")
+    strategy = self._make_strategy(save_dir="/tmp/state")
+    self.assertEqual(strategy._save_dir, "/tmp/state")
 
   def test_storage_directory_defaults_to_none(self):
     """Verifies save_dir is None when not specified.
@@ -1268,7 +1267,7 @@ class LocalConnectionStrategyConfigTest(unittest.TestCase):
     How: Build with default session_config and assert save_dir is None.
     """
     strategy = self._make_strategy()
-    self.assertIsNone(strategy._session_config.save_dir)
+    self.assertIsNone(strategy._save_dir)
 
   def test_workspaces_default_empty(self):
     """Verifies no workspace protos when session_config has no workspaces.
@@ -1363,10 +1362,8 @@ class LocalConnectionStrategyConfigTest(unittest.TestCase):
     The strategy must store it so the startup sequence can use it.
     How: Set save_dir via session_config and assert strategy attribute.
     """
-    strategy = self._make_strategy(
-        session_config=types.SessionConfig(save_dir="/data/sessions")
-    )
-    self.assertEqual(strategy._session_config.save_dir, "/data/sessions")
+    strategy = self._make_strategy(save_dir="/data/sessions")
+    self.assertEqual(strategy._save_dir, "/data/sessions")
 
   def test_session_config_save_dir_default_none(self):
     """Verifies that save_dir defaults to None when not provided.
@@ -1376,7 +1373,7 @@ class LocalConnectionStrategyConfigTest(unittest.TestCase):
     How: Build with default session_config and assert save_dir is None.
     """
     strategy = self._make_strategy()
-    self.assertIsNone(strategy._session_config.save_dir)
+    self.assertIsNone(strategy._save_dir)
 
   def test_full_session_config_to_proto(self):
     """Verifies that a full session_config produces correct proto fields.
@@ -1386,11 +1383,9 @@ class LocalConnectionStrategyConfigTest(unittest.TestCase):
     How: Set all session_config fields, build proto, and assert each mapping.
     """
     strategy = self._make_strategy(
-        session_config=types.SessionConfig(
-            conversation_id="session-789",
-            save_dir="/state/dir",
-            workspaces=["/ws/a"],
-        )
+        conversation_id="session-789",
+        save_dir="/state/dir",
+        workspaces=["/ws/a"],
     )
     config = strategy._build_harness_config()
     self.assertEqual(config.cascade_id, "session-789")
@@ -1400,16 +1395,24 @@ class LocalConnectionStrategyConfigTest(unittest.TestCase):
     )
     # save_dir is wired in __aenter__, not _build_harness_config;
     # verify storage.
-    self.assertEqual(strategy._session_config.save_dir, "/state/dir")
+    self.assertEqual(strategy._save_dir, "/state/dir")
 
 
 class LocalConnectionStrategyApiKeyTest(unittest.IsolatedAsyncioTestCase):
   """Tests for API key validation in LocalConnectionStrategy."""
 
+  def setUp(self):
+    super().setUp()
+    self.patcher = mock.patch(
+        "google.antigravity.connections.local_connection._get_default_binary_path",
+        return_value="/fake/binary",
+    )
+    self.patcher.start()
+    self.addCleanup(self.patcher.stop)
+
   def _make_strategy(self, **kwargs):
-    defaults = {"binary_path": "/fake/binary"}
-    defaults.update(kwargs)
-    return local_connection.LocalConnectionStrategy(**defaults)
+    """Creates a LocalConnectionStrategy with the given kwargs."""
+    return local_connection.LocalConnectionStrategy(**kwargs)
 
   @mock.patch.dict("os.environ", {}, clear=True)
   async def test_raises_without_api_key(self):
@@ -3537,6 +3540,28 @@ class LocalConnectionSendTest(unittest.IsolatedAsyncioTestCase):
     self.assertEqual(parts[1]["media"]["data"], "ZmFrZV9wZGY=")  # b"fake_pdf"
 
 
+
+
+class LocalAgentConfigTest(unittest.TestCase):
+
+  def test_create_strategy(self):
+    config = local_connection.LocalAgentConfig(
+        system_instructions="test instructions",
+        model="gemini-2.5-pro",
+    )
+
+    mock_tool_runner = mock.MagicMock()
+    mock_hook_runner = mock.MagicMock()
+
+    strategy = config.create_strategy(
+        tool_runner=mock_tool_runner,
+        hook_runner=mock_hook_runner,
+    )
+
+    self.assertIsInstance(strategy, local_connection.LocalConnectionStrategy)
+    self.assertEqual(
+        strategy._gemini_config.models.default.name, "gemini-2.5-pro"
+    )
 
 
 if __name__ == "__main__":

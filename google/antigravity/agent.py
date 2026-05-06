@@ -15,16 +15,10 @@
 """Layer 1 API for Antigravity SDK."""
 
 import asyncio
-import json
 import logging
-import tempfile
-from typing import Any, Callable
-
-import pydantic
 
 from google.antigravity import types
 from google.antigravity.connections import connection as connection_module
-from google.antigravity.connections import local_connection
 from google.antigravity.conversation import conversation
 from google.antigravity.hooks import cli
 from google.antigravity.hooks import hook_runner
@@ -39,111 +33,10 @@ from google.antigravity.triggers import triggers as triggers_lib
 _Hook = hooks.Hook
 
 
-class AgentConfig(pydantic.BaseModel):
-  """Declarative configuration for an Agent.
-
-  This is a pure data object — no runtime state. It can be reused
-  across multiple Agent instances, serialized, or tested in isolation.
-
-  Top-level ``model`` and ``api_key`` are convenience sugar that flow
-  into ``gemini_config``.  Do not set both the sugar and the structured
-  path — a ``ValueError`` is raised on conflict.
-
-  Attributes:
-    system_instructions: Agent instructions. Strings are auto-wrapped in
-      TemplatedSystemInstructions during session start.
-    gemini_config: Model backend configuration.
-    capabilities: Builtin tool enablement. Defaults to read-only.
-    tools: Custom Python tools to register.
-    policies: Custom policies to enforce.
-    hooks: Custom hooks to register.
-    triggers: Custom triggers to register.
-    mcp_servers: MCP server configurations.
-    workspaces: Directory paths to restrict the agent to.
-    session_config: Session persistence and resumption configuration.
-    response_schema: Optional Pydantic model or JSON schema dict for structured
-      output.
-    skills_paths: List of paths to skills to load.
-    model: Sugar — sets gemini_config.models.default.
-    api_key: Sugar — sets gemini_config.api_key.
-  """
-
-  model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
-
-  system_instructions: str | types.SystemInstructions
-  gemini_config: types.GeminiConfig = pydantic.Field(
-      default_factory=types.GeminiConfig
-  )
-  capabilities: types.CapabilitiesConfig = pydantic.Field(
-      default_factory=lambda: types.CapabilitiesConfig(
-          enabled_tools=types.BuiltinTools.read_only()
-      )
-  )
-  tools: list[Callable[..., Any]] = pydantic.Field(default_factory=list)
-  policies: list[policy.Policy] = pydantic.Field(default_factory=list)
-  hooks: list[_Hook] = pydantic.Field(default_factory=list)
-  triggers: list[triggers_lib.Trigger] = pydantic.Field(default_factory=list)
-  mcp_servers: list[dict[str, Any]] = pydantic.Field(default_factory=list)
-  workspaces: list[str] = pydantic.Field(default_factory=list)
-  session_config: types.SessionConfig = pydantic.Field(
-      default_factory=types.SessionConfig
-  )
-  response_schema: dict[str, Any] | type[pydantic.BaseModel] | str | None = None
-  skills_paths: list[str] = pydantic.Field(default_factory=list)
-
-  # Top-level sugar — flows into gemini_config.
-  model: str | None = None
-  api_key: str | None = None
-
-  @pydantic.field_validator("response_schema")
-  def _validate_schema(cls, v):  # pylint: disable=no-self-argument
-    if v is None:
-      return None
-    if isinstance(v, str):
-      try:
-        json.loads(v)
-        return v
-      except json.JSONDecodeError:
-        logging.warning(
-            "Provided response_schema string is not a valid JSON. Schema"
-            " ignored."
-        )
-        return None
-    if isinstance(v, dict):
-      return json.dumps(v)
-    if isinstance(v, type) and issubclass(v, pydantic.BaseModel):
-      return json.dumps(v.model_json_schema())
-    logging.warning(
-        "Unsupported response_schema format: %s. Schema ignored.", type(v)
-    )
-    return None
-
-  @pydantic.model_validator(mode="after")
-  def _apply_sugar(self) -> "AgentConfig":
-    # Defensive copy: prevent mutation of shared GeminiConfig instances.
-    self.gemini_config = self.gemini_config.model_copy(deep=True)
-
-    if self.model is not None:
-      if "default" in self.gemini_config.models.model_fields_set:
-        raise ValueError(
-            "Cannot set both 'model' sugar and "
-            "'gemini_config.models.default'. Use one or the other."
-        )
-      self.gemini_config.models.default = types.ModelEntry(name=self.model)
-    if self.api_key is not None:
-      if self.gemini_config.api_key is not None:
-        raise ValueError(
-            "Cannot set both 'api_key' sugar and "
-            "'gemini_config.api_key'. Use one or the other."
-        )
-      self.gemini_config.api_key = self.api_key
-    return self
-
-
 class Agent:
   """High-level Agent API for simplified interaction."""
 
-  def __init__(self, config: AgentConfig):
+  def __init__(self, config: connection_module.AgentConfig):
     """Initializes the Agent.
 
     Args:
@@ -241,35 +134,9 @@ class Agent:
           else:
             raise ValueError(f"Unknown MCP server type: {srv_type}")
 
-      if isinstance(self._config.system_instructions, str):
-        si = types.TemplatedSystemInstructions(
-            sections=[
-                types.SystemInstructionSection(
-                    content=self._config.system_instructions
-                )
-            ]
-        )
-      else:
-        si = self._config.system_instructions
-
-      session = self._config.session_config
-      # Merge top-level workspaces into session_config.
-      if self._config.workspaces:
-        merged = list(session.workspaces or []) + self._config.workspaces
-        session = session.model_copy(update={"workspaces": merged})
-      if session.save_dir is None:
-        default_dir = tempfile.mkdtemp(prefix="antigravity_")
-        logging.info("No save_dir specified; using %s", default_dir)
-        session = session.model_copy(update={"save_dir": default_dir})
-
-      self._strategy = local_connection.LocalConnectionStrategy(
+      self._strategy = self._config.create_strategy(
           tool_runner=self._tool_runner,
           hook_runner=self._hook_runner,
-          gemini_config=self._config.gemini_config,
-          system_instructions=si,
-          capabilities_config=self._config.capabilities,
-          session_config=session,
-          skills_paths=self._config.skills_paths,
       )
 
       logging.info("Starting connection and creating conversation...")

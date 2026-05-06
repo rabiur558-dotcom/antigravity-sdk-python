@@ -37,7 +37,7 @@ import asyncio
 import logging
 
 from google.antigravity.agent import Agent
-from google.antigravity.agent import AgentConfig
+from google.antigravity.connections.local_connection import LocalAgentConfig
 
 _PASS_TOKEN = "[PASS]"
 _MAX_CONSECUTIVE_PASSES = 2  # agent exits after N passes in a row
@@ -226,7 +226,7 @@ async def main() -> None:
 
   agents: dict[str, Agent] = {}
   for name, instructions in _AGENT_CONFIGS.items():
-    config = AgentConfig(
+    config = LocalAgentConfig(
         system_instructions=instructions,
         tools=[pass_turn],
     )

@@ -32,7 +32,7 @@ import asyncio
 import logging
 from google.antigravity import types
 from google.antigravity.agent import Agent
-from google.antigravity.agent import AgentConfig
+from google.antigravity.connections.local_connection import LocalAgentConfig
 from google.antigravity.examples import example_policies
 
 
@@ -40,7 +40,7 @@ async def main():
   logging.basicConfig(level=logging.INFO)
 
   print("Creating agent...")
-  config = AgentConfig(
+  config = LocalAgentConfig(
       system_instructions="You are a helpful assistant.",
       policies=[example_policies.BLOCK_RM_POLICY],
       capabilities=types.CapabilitiesConfig(),

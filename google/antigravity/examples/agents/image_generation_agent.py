@@ -18,6 +18,7 @@ import asyncio
 import logging
 from google.antigravity import agent
 from google.antigravity import types
+from google.antigravity.connections.local_connection import LocalAgentConfig
 from google.antigravity.hooks import policy
 
 
@@ -31,7 +32,7 @@ async def main():
   )
 
   print("Creating agent...")
-  config = agent.AgentConfig(
+  config = LocalAgentConfig(
       system_instructions=(
           "You have a tool named 'generate_image'. You MUST use it when the"
           " user asks you to generate or modify an image."

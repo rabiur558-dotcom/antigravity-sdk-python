@@ -20,6 +20,7 @@ import logging
 import pydantic
 
 from google.antigravity import agent
+from google.antigravity.connections.local_connection import LocalAgentConfig
 
 
 class ActionItem(pydantic.BaseModel):
@@ -50,7 +51,7 @@ async def run():
   logging.basicConfig(level=logging.INFO)
 
   try:
-    config = agent.AgentConfig(
+    config = LocalAgentConfig(
         system_instructions="You are a helpful assistant.",
         tools=[fetch_unstructured_meeting_notes],
         response_schema=MeetingSummary,

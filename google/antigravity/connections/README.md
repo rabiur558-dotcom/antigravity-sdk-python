@@ -24,6 +24,17 @@ Key methods:
 - `connect()`: Returns the established `Connection`.
 - `__aenter__()` and `__aexit__()`: Support for use as an async context manager to manage the backend lifecycle.
 
+### `AgentConfig`
+
+`AgentConfig` is an abstract base class for agent configuration. Each
+`ConnectionStrategy` defines a concrete subclass with the config fields it needs
+(e.g., `LocalAgentConfig` for `LocalConnectionStrategy`).
+
+Key methods:
+
+- `create_strategy(tool_runner, hook_runner)`: Abstract method that creates the
+  `ConnectionStrategy` for this config.
+
 ## Implementations
 
 ### `LocalConnection`

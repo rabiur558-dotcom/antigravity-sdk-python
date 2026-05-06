@@ -49,5 +49,28 @@ class ConnectionTest(unittest.IsolatedAsyncioTestCase):
     await conn.send_tool_results([])
 
 
+class AgentConfigTest(unittest.TestCase):
+
+  def test_cannot_instantiate_abc(self):
+    with self.assertRaises(TypeError):
+      connection.AgentConfig(system_instructions="test")
+
+  def test_subclass_must_implement_create_strategy(self):
+    class IncompleteConfig(connection.AgentConfig):
+      pass
+
+    with self.assertRaises(TypeError):
+      IncompleteConfig(system_instructions="test")
+
+  def test_concrete_subclass_works(self):
+    class ConcreteConfig(connection.AgentConfig):
+
+      def create_strategy(self, *, tool_runner, hook_runner):
+        return None
+
+    config = ConcreteConfig(system_instructions="test")
+    self.assertEqual(config.system_instructions, "test")
+
+
 if __name__ == "__main__":
   unittest.main()

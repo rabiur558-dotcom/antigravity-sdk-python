@@ -24,8 +24,80 @@ backend type and how to tear it down.
 
 
 import abc
-from typing import Any, AsyncIterator
+import json
+import logging
+from typing import Any, AsyncIterator, Callable
+import pydantic
 from google.antigravity import types
+
+
+class AgentConfig(abc.ABC, pydantic.BaseModel):
+  """Abstract base class for agent configuration.
+
+  Each ConnectionStrategy defines a concrete subclass with the
+  config fields it needs. Agent introspects the config type to
+  auto-dispatch to the correct strategy factory.
+  """
+
+  model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
+
+  system_instructions: str | types.SystemInstructions | None = None
+  capabilities: types.CapabilitiesConfig = pydantic.Field(
+      default_factory=lambda: types.CapabilitiesConfig(
+          enabled_tools=types.BuiltinTools.read_only()
+      )
+  )
+  tools: list[Callable[..., Any]] = pydantic.Field(default_factory=list)
+  policies: list[Any] = pydantic.Field(default_factory=list)
+  hooks: list[Any] = pydantic.Field(default_factory=list)
+  triggers: list[Any] = pydantic.Field(default_factory=list)
+  mcp_servers: list[dict[str, Any]] = pydantic.Field(default_factory=list)
+  workspaces: list[str] = pydantic.Field(default_factory=list)
+  conversation_id: str | None = None
+  save_dir: str | None = None
+  response_schema: dict[str, Any] | type[pydantic.BaseModel] | str | None = None
+  skills_paths: list[str] = pydantic.Field(default_factory=list)
+
+  @pydantic.field_validator("response_schema")
+  def _validate_schema(cls, v):  # pylint: disable=no-self-argument
+    if v is None:
+      return None
+    if isinstance(v, str):
+      try:
+        json.loads(v)
+        return v
+      except json.JSONDecodeError:
+        logging.warning(
+            "Provided response_schema string is not a valid JSON. Schema"
+            " ignored."
+        )
+        return None
+    if isinstance(v, dict):
+      return json.dumps(v)
+    if isinstance(v, type) and issubclass(v, pydantic.BaseModel):
+      return json.dumps(v.model_json_schema())
+    logging.warning(
+        "Unsupported response_schema format: %s. Schema ignored.", type(v)
+    )
+    return None
+
+  @abc.abstractmethod
+  def create_strategy(
+      self,
+      *,
+      tool_runner: Any,
+      hook_runner: Any,
+  ) -> "ConnectionStrategy":
+    """Creates the ConnectionStrategy for this config.
+
+    The Agent calls this after setting up ToolRunner, HookRunner,
+    and policies. The strategy receives the fully-wired runners.
+
+    Args:
+      tool_runner: The fully-wired ToolRunner.
+      hook_runner: The fully-wired HookRunner.
+    """
+    ...
 
 
 class Connection(abc.ABC):

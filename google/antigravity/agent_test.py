@@ -29,7 +29,7 @@ from google.antigravity.hooks import policy
 class AgentTest(unittest.IsolatedAsyncioTestCase):
 
   @mock.patch(
-      "google.antigravity.agent."
+      "google.antigravity.connections."
       "local_connection.LocalConnectionStrategy"
   )
   @mock.patch.object(conversation.Conversation, "create")
@@ -44,12 +44,12 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
     mock_cm.__aenter__.return_value = mock_conversation
     mock_conv_create.return_value = mock_cm
 
-    config = agent.AgentConfig(system_instructions="test")
+    config = local_connection.LocalAgentConfig(system_instructions="test")
     async with agent.Agent(config) as ag:
       self.assertEqual(ag._conversation, mock_conversation)
 
   @mock.patch(
-      "google.antigravity.agent."
+      "google.antigravity.connections."
       "local_connection.LocalConnectionStrategy"
   )
   @mock.patch.object(conversation.Conversation, "create")
@@ -72,7 +72,7 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
         )
     )
 
-    config = agent.AgentConfig(system_instructions="test")
+    config = local_connection.LocalAgentConfig(system_instructions="test")
     async with agent.Agent(config) as ag:
       response = await ag.chat("Hello")
       self.assertEqual(response.text, "Hello back")
@@ -105,7 +105,7 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
         )
     )
 
-    config = agent.AgentConfig(system_instructions="test")
+    config = local_connection.LocalAgentConfig(system_instructions="test")
     async with agent.Agent(config) as ag:
       multimodal_prompt = [
           "Look at this:",
@@ -118,7 +118,7 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
       mock_conversation.chat.assert_called_once_with(multimodal_prompt)
 
   @mock.patch(
-      "google.antigravity.agent."
+      "google.antigravity.connections."
       "local_connection.LocalConnectionStrategy"
   )
   @mock.patch.object(conversation.Conversation, "create")
@@ -131,7 +131,7 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
     mock_strategy_instance.stop = mock.AsyncMock()
     mock_strategy_class.return_value = mock_strategy_instance
 
-    config = agent.AgentConfig(system_instructions="test")
+    config = local_connection.LocalAgentConfig(system_instructions="test")
     async with agent.Agent(config):
       _, kwargs = mock_strategy_class.call_args
       capabilities_config = kwargs.get("capabilities_config")
@@ -141,7 +141,7 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
       )
 
   @mock.patch(
-      "google.antigravity.agent."
+      "google.antigravity.connections."
       "local_connection.LocalConnectionStrategy"
   )
   @mock.patch.object(conversation.Conversation, "create")
@@ -154,7 +154,7 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
     mock_strategy_instance.stop = mock.AsyncMock()
     mock_strategy_class.return_value = mock_strategy_instance
 
-    config = agent.AgentConfig(
+    config = local_connection.LocalAgentConfig(
         system_instructions="test",
         capabilities=types.CapabilitiesConfig(),
     )
@@ -163,7 +163,7 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
         pass
 
   @mock.patch(
-      "google.antigravity.agent."
+      "google.antigravity.connections."
       "local_connection.LocalConnectionStrategy"
   )
   @mock.patch.object(conversation.Conversation, "create")
@@ -173,7 +173,7 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
     """Guard fires when enabled_tools includes a non-read-only tool."""
     del mock_conv_create
     mock_strategy_class.return_value = mock.MagicMock(stop=mock.AsyncMock())
-    config = agent.AgentConfig(
+    config = local_connection.LocalAgentConfig(
         system_instructions="test",
         capabilities=types.CapabilitiesConfig(
             enabled_tools=[types.BuiltinTools.RUN_COMMAND],
@@ -184,7 +184,7 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
         pass
 
   @mock.patch(
-      "google.antigravity.agent."
+      "google.antigravity.connections."
       "local_connection.LocalConnectionStrategy"
   )
   @mock.patch.object(conversation.Conversation, "create")
@@ -194,7 +194,7 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
     """Guard fires when all tools are listed explicitly."""
     del mock_conv_create
     mock_strategy_class.return_value = mock.MagicMock(stop=mock.AsyncMock())
-    config = agent.AgentConfig(
+    config = local_connection.LocalAgentConfig(
         system_instructions="test",
         capabilities=types.CapabilitiesConfig(
             enabled_tools=list(types.BuiltinTools),
@@ -205,7 +205,7 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
         pass
 
   @mock.patch(
-      "google.antigravity.agent."
+      "google.antigravity.connections."
       "local_connection.LocalConnectionStrategy"
   )
   @mock.patch.object(conversation.Conversation, "create")
@@ -215,7 +215,7 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
     """Guard fires when disabled_tools=[] (= all tools enabled)."""
     del mock_conv_create
     mock_strategy_class.return_value = mock.MagicMock(stop=mock.AsyncMock())
-    config = agent.AgentConfig(
+    config = local_connection.LocalAgentConfig(
         system_instructions="test",
         capabilities=types.CapabilitiesConfig(disabled_tools=[]),
     )
@@ -224,7 +224,7 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
         pass
 
   @mock.patch(
-      "google.antigravity.agent."
+      "google.antigravity.connections."
       "local_connection.LocalConnectionStrategy"
   )
   @mock.patch.object(conversation.Conversation, "create")
@@ -234,7 +234,7 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
     """No guard when only read-only tools are explicitly enabled."""
     del mock_conv_create
     mock_strategy_class.return_value = mock.MagicMock(stop=mock.AsyncMock())
-    config = agent.AgentConfig(
+    config = local_connection.LocalAgentConfig(
         system_instructions="test",
         capabilities=types.CapabilitiesConfig(
             enabled_tools=types.BuiltinTools.read_only(),
@@ -244,7 +244,7 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
       pass  # Should not raise.
 
   @mock.patch(
-      "google.antigravity.agent."
+      "google.antigravity.connections."
       "local_connection.LocalConnectionStrategy"
   )
   @mock.patch.object(conversation.Conversation, "create")
@@ -254,7 +254,7 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
     """No guard when write tools are enabled AND policies are provided."""
     del mock_conv_create
     mock_strategy_class.return_value = mock.MagicMock(stop=mock.AsyncMock())
-    config = agent.AgentConfig(
+    config = local_connection.LocalAgentConfig(
         system_instructions="test",
         capabilities=types.CapabilitiesConfig(),
         policies=[policy.deny("*")],
@@ -263,7 +263,7 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
       pass  # Should not raise.
 
   @mock.patch(
-      "google.antigravity.agent."
+      "google.antigravity.connections."
       "local_connection.LocalConnectionStrategy"
   )
   @mock.patch.object(conversation.Conversation, "create")
@@ -284,18 +284,20 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
     my_hook = MyPreTurnHook()
 
     # Test constructor registration
-    config = agent.AgentConfig(system_instructions="test", hooks=[my_hook])
+    config = local_connection.LocalAgentConfig(
+        system_instructions="test", hooks=[my_hook]
+    )
     async with agent.Agent(config) as ag:
       self.assertIn(my_hook, ag._hook_runner.pre_turn_hooks)
 
     # Test dynamic registration
-    config = agent.AgentConfig(system_instructions="test")
+    config = local_connection.LocalAgentConfig(system_instructions="test")
     async with agent.Agent(config) as ag:
       ag.register_hook(my_hook)
       self.assertIn(my_hook, ag._hook_runner.pre_turn_hooks)
 
   @mock.patch(
-      "google.antigravity.agent."
+      "google.antigravity.connections."
       "local_connection.LocalConnectionStrategy"
   )
   @mock.patch.object(conversation.Conversation, "create")
@@ -329,7 +331,7 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
       pass
 
     # Test constructor registration: TriggerRunner started with trigger.
-    config = agent.AgentConfig(
+    config = local_connection.LocalAgentConfig(
         system_instructions="test", triggers=[my_trigger]
     )
     async with agent.Agent(config):
@@ -345,7 +347,7 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
     mock_runner_instance.reset_mock()
 
     # Test dynamic registration before start.
-    config = agent.AgentConfig(system_instructions="test")
+    config = local_connection.LocalAgentConfig(system_instructions="test")
     ag = agent.Agent(config)
     ag.register_trigger(my_trigger)
     async with ag:
@@ -355,7 +357,7 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
       mock_runner_instance.start.assert_called_once()
 
   @mock.patch(
-      "google.antigravity.agent."
+      "google.antigravity.connections."
       "local_connection.LocalConnectionStrategy"
   )
   @mock.patch.object(conversation.Conversation, "create")
@@ -375,7 +377,7 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
 
     my_hook = MyPreTurnHook()
 
-    config = agent.AgentConfig(system_instructions="test")
+    config = local_connection.LocalAgentConfig(system_instructions="test")
     ag = agent.Agent(config)
     ag.register_hook(my_hook)
     self.assertIn(my_hook, ag._pending_hooks)
@@ -385,7 +387,7 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
       self.assertEqual(len(ag._pending_hooks), 0)
 
   @mock.patch(
-      "google.antigravity.agent."
+      "google.antigravity.connections."
       "local_connection.LocalConnectionStrategy"
   )
   @mock.patch.object(conversation.Conversation, "create")
@@ -401,7 +403,7 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
     async def my_trigger(_):
       pass
 
-    config = agent.AgentConfig(
+    config = local_connection.LocalAgentConfig(
         system_instructions="test", triggers=[my_trigger]
     )
     async with agent.Agent(config) as ag:
@@ -409,7 +411,7 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
         ag.register_trigger(my_trigger)
 
   @mock.patch(
-      "google.antigravity.agent."
+      "google.antigravity.connections."
       "local_connection.LocalConnectionStrategy"
   )
   @mock.patch.object(conversation.Conversation, "create")
@@ -424,7 +426,7 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
 
     my_policy = policy.allow("some_tool")
 
-    config = agent.AgentConfig(
+    config = local_connection.LocalAgentConfig(
         system_instructions="test",
         capabilities=types.CapabilitiesConfig(),
         policies=[my_policy],
@@ -433,7 +435,7 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
       self.assertEqual(len(ag._hook_runner.pre_tool_call_decide_hooks), 1)
 
   @mock.patch(
-      "google.antigravity.agent."
+      "google.antigravity.connections."
       "local_connection.LocalConnectionStrategy"
   )
   @mock.patch.object(conversation.Conversation, "create")
@@ -448,7 +450,7 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
 
     my_policy = policy.allow("some_tool")
 
-    config = agent.AgentConfig(
+    config = local_connection.LocalAgentConfig(
         system_instructions="test",
         capabilities=types.CapabilitiesConfig(),
         policies=[my_policy],
@@ -462,7 +464,7 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
       )
 
   @mock.patch(
-      "google.antigravity.agent."
+      "google.antigravity.connections."
       "local_connection.LocalConnectionStrategy"
   )
   @mock.patch.object(conversation.Conversation, "create")
@@ -478,29 +480,35 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
     mcp_servers = [{"type": "unknown_type"}]
 
     with self.assertRaises(ValueError):
-      config = agent.AgentConfig(
+      config = local_connection.LocalAgentConfig(
           system_instructions="test", mcp_servers=mcp_servers
       )
       async with agent.Agent(config):
         pass
 
   async def test_agent_chat_before_start(self):
-    ag = agent.Agent(agent.AgentConfig(system_instructions="test"))
+    ag = agent.Agent(
+        local_connection.LocalAgentConfig(system_instructions="test")
+    )
     with self.assertRaises(RuntimeError):
       await ag.chat("hello")
 
   async def test_agent_connection_before_start(self):
-    ag = agent.Agent(agent.AgentConfig(system_instructions="test"))
+    ag = agent.Agent(
+        local_connection.LocalAgentConfig(system_instructions="test")
+    )
     with self.assertRaises(RuntimeError):
       _ = ag.connection
 
   async def test_agent_run_interactive_loop_before_start(self):
-    ag = agent.Agent(agent.AgentConfig(system_instructions="test"))
+    ag = agent.Agent(
+        local_connection.LocalAgentConfig(system_instructions="test")
+    )
     with self.assertRaises(RuntimeError):
       await ag.run_interactive_loop()
 
   @mock.patch(
-      "google.antigravity.agent."
+      "google.antigravity.connections."
       "local_connection.LocalConnectionStrategy"
   )
   @mock.patch.object(conversation.Conversation, "create")
@@ -512,7 +520,9 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
     mock_strategy_class.return_value = mock_strategy_instance
 
     with mock.patch.dict("os.environ", {}, clear=True):
-      config = agent.AgentConfig(system_instructions="test", api_key="test_key")
+      config = local_connection.LocalAgentConfig(
+          system_instructions="test", api_key="test_key"
+      )
       async with agent.Agent(config):
         self.assertIsNone(os.environ.get("GEMINI_API_KEY"))
         _, kwargs = mock_strategy_class.call_args
@@ -521,7 +531,7 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(gemini_config.api_key, "test_key")
 
   @mock.patch(
-      "google.antigravity.agent."
+      "google.antigravity.connections."
       "local_connection.LocalConnectionStrategy"
   )
   @mock.patch.object(conversation.Conversation, "create")
@@ -534,7 +544,7 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
     mock_strategy_instance.stop = mock.AsyncMock()
     mock_strategy_class.return_value = mock_strategy_instance
 
-    config = agent.AgentConfig(
+    config = local_connection.LocalAgentConfig(
         system_instructions="test", model="gemini-2.5-pro"
     )
     async with agent.Agent(config):
@@ -544,7 +554,7 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
       self.assertEqual(gemini_config.models.default.name, "gemini-2.5-pro")
 
   @mock.patch(
-      "google.antigravity.agent.local_connection.LocalConnectionStrategy"
+      "google.antigravity.connections.local_connection.LocalConnectionStrategy"
   )
   @mock.patch.object(conversation.Conversation, "create")
   async def test_agent_with_system_instructions_object(
@@ -555,14 +565,14 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
     mock_strategy_class.return_value = mock_strategy_instance
 
     si_obj = types.CustomSystemInstructions(text="custom si")
-    config = agent.AgentConfig(system_instructions=si_obj)
+    config = local_connection.LocalAgentConfig(system_instructions=si_obj)
     async with agent.Agent(config):
       _, kwargs = mock_strategy_class.call_args
       si = kwargs.get("system_instructions")
       self.assertEqual(si, si_obj)
 
   @mock.patch(
-      "google.antigravity.agent."
+      "google.antigravity.connections."
       "local_connection.LocalConnectionStrategy"
   )
   @mock.patch.object(conversation.Conversation, "create")
@@ -575,22 +585,20 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
     mock_strategy_instance.stop = mock.AsyncMock()
     mock_strategy_class.return_value = mock_strategy_instance
 
-    sc = types.SessionConfig(
+    config = local_connection.LocalAgentConfig(
+        system_instructions="test",
         conversation_id="resume-id",
         save_dir="/state",
         workspaces=["/path/1", "/path/2"],
     )
-    config = agent.AgentConfig(system_instructions="test", session_config=sc)
     async with agent.Agent(config) as _:
       _, kwargs = mock_strategy_class.call_args
-      session_config = kwargs.get("session_config")
-      self.assertEqual(session_config, sc)
-      self.assertEqual(session_config.conversation_id, "resume-id")
-      self.assertEqual(session_config.save_dir, "/state")
-      self.assertEqual(session_config.workspaces, ["/path/1", "/path/2"])
+      self.assertEqual(kwargs.get("conversation_id"), "resume-id")
+      self.assertEqual(kwargs.get("save_dir"), "/state")
+      self.assertEqual(kwargs.get("workspaces"), ["/path/1", "/path/2"])
 
   @mock.patch(
-      "google.antigravity.agent."
+      "google.antigravity.connections."
       "local_connection.LocalConnectionStrategy"
   )
   @mock.patch.object(conversation.Conversation, "create")
@@ -604,7 +612,7 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
     mock_strategy_class.return_value = mock_strategy_instance
 
     skills_paths = ["/path/1", "/path/2"]
-    config = agent.AgentConfig(
+    config = local_connection.LocalAgentConfig(
         system_instructions="test", skills_paths=skills_paths
     )
     async with agent.Agent(config) as _:
@@ -613,7 +621,7 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
       self.assertEqual(sp, skills_paths)
 
   @mock.patch(
-      "google.antigravity.agent."
+      "google.antigravity.connections."
       "local_connection.LocalConnectionStrategy"
   )
   @mock.patch.object(conversation.Conversation, "create")
@@ -641,7 +649,7 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
         {"type": "sse", "url": "http://localhost:8000/sse"},
     ]
 
-    config = agent.AgentConfig(
+    config = local_connection.LocalAgentConfig(
         system_instructions="test", mcp_servers=mcp_servers
     )
     async with agent.Agent(config) as ag:
@@ -656,7 +664,7 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
     mock_bridge_instance.stop.assert_called_once()
 
   @mock.patch(
-      "google.antigravity.agent."
+      "google.antigravity.connections."
       "local_connection.LocalConnectionStrategy"
   )
   @mock.patch.object(conversation.Conversation, "create")
@@ -685,7 +693,7 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
     # Mock input to return '', 'hello' then 'exit'
     mock_to_thread.side_effect = ["", "hello", "exit"]
 
-    config = agent.AgentConfig(system_instructions="test")
+    config = local_connection.LocalAgentConfig(system_instructions="test")
     async with agent.Agent(config) as ag:
       with mock.patch("builtins.print") as mock_print:
         await ag.run_interactive_loop()
@@ -694,7 +702,7 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
     mock_print.assert_any_call("Agent: Agent response")
 
   @mock.patch(
-      "google.antigravity.agent."
+      "google.antigravity.connections."
       "local_connection.LocalConnectionStrategy"
   )
   @mock.patch.object(conversation.Conversation, "create")
@@ -709,7 +717,7 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
 
     mock_to_thread.side_effect = KeyboardInterrupt()
 
-    config = agent.AgentConfig(system_instructions="test")
+    config = local_connection.LocalAgentConfig(system_instructions="test")
     async with agent.Agent(config) as ag:
       with mock.patch("builtins.print") as mock_print:
         await ag.run_interactive_loop()
@@ -717,7 +725,7 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
     mock_print.assert_any_call("\nGoodbye!")
 
   @mock.patch(
-      "google.antigravity.agent."
+      "google.antigravity.connections."
       "local_connection.LocalConnectionStrategy"
   )
   @mock.patch.object(conversation.Conversation, "create")
@@ -732,7 +740,7 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
 
     mock_to_thread.side_effect = [ValueError("Fail"), "exit"]
 
-    config = agent.AgentConfig(system_instructions="test")
+    config = local_connection.LocalAgentConfig(system_instructions="test")
     async with agent.Agent(config) as ag:
       with mock.patch("builtins.print") as mock_print:
         await ag.run_interactive_loop()
@@ -740,7 +748,7 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
     mock_print.assert_any_call("Error: Fail")
 
   @mock.patch(
-      "google.antigravity.agent."
+      "google.antigravity.connections."
       "local_connection.LocalConnectionStrategy"
   )
   @mock.patch.object(conversation.Conversation, "create")
@@ -758,7 +766,7 @@ class AgentTest(unittest.IsolatedAsyncioTestCase):
     mock_cm.__aenter__.return_value = mock_conversation
     mock_conv_create.return_value = mock_cm
 
-    config = agent.AgentConfig(system_instructions="test")
+    config = local_connection.LocalAgentConfig(system_instructions="test")
     async with agent.Agent(config) as ag:
       conn = ag.connection
       self.assertEqual(conn, mock_conversation._connection)
@@ -769,20 +777,22 @@ class AgentConfigTest(unittest.TestCase):
 
   def test_sugar_model_flows_to_gemini_config(self):
     """Verifies model sugar flows to gemini_config.models.default.name."""
-    config = agent.AgentConfig(
+    config = local_connection.LocalAgentConfig(
         system_instructions="test", model="gemini-2.5-pro"
     )
     self.assertEqual(config.gemini_config.models.default.name, "gemini-2.5-pro")
 
   def test_sugar_api_key_flows_to_gemini_config(self):
     """Verifies api_key sugar flows to gemini_config.api_key."""
-    config = agent.AgentConfig(system_instructions="test", api_key="my-key")
+    config = local_connection.LocalAgentConfig(
+        system_instructions="test", api_key="my-key"
+    )
     self.assertEqual(config.gemini_config.api_key, "my-key")
 
   def test_conflict_model_raises(self):
     """Verifies ValueError when both model sugar and structured config are set."""
     with self.assertRaises(ValueError):
-      agent.AgentConfig(
+      local_connection.LocalAgentConfig(
           system_instructions="test",
           model="gemini-2.5-pro",
           gemini_config=types.GeminiConfig(
@@ -795,7 +805,7 @@ class AgentConfigTest(unittest.TestCase):
   def test_conflict_api_key_raises(self):
     """Verifies ValueError when both api_key sugar and gemini_config.api_key are set."""
     with self.assertRaises(ValueError):
-      agent.AgentConfig(
+      local_connection.LocalAgentConfig(
           system_instructions="test",
           api_key="sugar-key",
           gemini_config=types.GeminiConfig(api_key="config-key"),
@@ -804,12 +814,12 @@ class AgentConfigTest(unittest.TestCase):
   def test_defensive_copy(self):
     """Verifies shared GeminiConfig is not cross-contaminated."""
     shared = types.GeminiConfig()
-    config1 = agent.AgentConfig(
+    config1 = local_connection.LocalAgentConfig(
         system_instructions="test",
         gemini_config=shared,
         model="model-a",
     )
-    config2 = agent.AgentConfig(
+    config2 = local_connection.LocalAgentConfig(
         system_instructions="test",
         gemini_config=shared,
         model="model-b",
@@ -820,7 +830,7 @@ class AgentConfigTest(unittest.TestCase):
 
   def test_defaults(self):
     """Verifies AgentConfig defaults: read-only capabilities, default model."""
-    config = agent.AgentConfig(system_instructions="test")
+    config = local_connection.LocalAgentConfig(system_instructions="test")
     self.assertEqual(
         config.capabilities.enabled_tools,
         types.BuiltinTools.read_only(),
@@ -832,7 +842,7 @@ class AgentConfigTest(unittest.TestCase):
 
   def test_model_sugar_does_not_clobber_image_generation(self):
     """Verifies model sugar only sets default slot, not image_generation."""
-    config = agent.AgentConfig(
+    config = local_connection.LocalAgentConfig(
         system_instructions="test", model="custom-chat-model"
     )
     self.assertEqual(
@@ -845,7 +855,7 @@ class AgentConfigTest(unittest.TestCase):
 
   def test_conflict_model_with_gemini_config_no_model(self):
     """Verifies no conflict when gemini_config has no explicit default."""
-    config = agent.AgentConfig(
+    config = local_connection.LocalAgentConfig(
         system_instructions="test",
         model="custom-model",
         gemini_config=types.GeminiConfig(api_key="key-only"),
@@ -853,9 +863,7 @@ class AgentConfigTest(unittest.TestCase):
     self.assertEqual(config.gemini_config.models.default.name, "custom-model")
     self.assertEqual(config.gemini_config.api_key, "key-only")
 
-  @mock.patch.object(
-      agent.local_connection, "LocalConnectionStrategy", autospec=True
-  )
+  @mock.patch.object(local_connection, "LocalConnectionStrategy", autospec=True)
   @mock.patch.object(conversation.Conversation, "create", autospec=True)
   async def test_agent_with_response_schema(
       self, mock_conv_create, mock_strategy_class
@@ -866,7 +874,7 @@ class AgentConfigTest(unittest.TestCase):
     mock_strategy_instance.stop = mock.AsyncMock()
 
     schema_dict = {"properties": {"field": {"type": "string"}}}
-    config = agent.AgentConfig(
+    config = local_connection.LocalAgentConfig(
         system_instructions="test", response_schema=schema_dict
     )
     async with agent.Agent(config) as _:
@@ -880,12 +888,16 @@ class AgentConfigTest(unittest.TestCase):
 
   def test_conversation_id_returns_none_before_session(self):
     """Verifies conversation_id is None before the session starts."""
-    a = agent.Agent(agent.AgentConfig(system_instructions="test"))
+    a = agent.Agent(
+        local_connection.LocalAgentConfig(system_instructions="test")
+    )
     self.assertIsNone(a.conversation_id)
 
   def test_conversation_id_returns_value_after_session(self):
     """Verifies conversation_id returns the runtime-assigned ID."""
-    a = agent.Agent(agent.AgentConfig(system_instructions="test"))
+    a = agent.Agent(
+        local_connection.LocalAgentConfig(system_instructions="test")
+    )
     mock_conv = mock.MagicMock()
     mock_conv.conversation_id = "test-conv-123"
     a._conversation = mock_conv

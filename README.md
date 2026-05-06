@@ -23,10 +23,10 @@ The `system_instructions` parameter is optional.
 
 ```python
 import asyncio
-from google.antigravity import Agent, AgentConfig
+from google.antigravity import Agent, LocalAgentConfig
 
 async def main():
-    config = AgentConfig(
+    config = LocalAgentConfig(
         system_instructions="You are an expert assistant for codebase navigation.",
         api_key="GEMINI_API_KEY",
     )
@@ -47,9 +47,9 @@ By default, `Agent` runs in **read-only mode** for safety. Pass
 ### Interactive Loop
 
 ```python
-from google.antigravity import Agent, AgentConfig, CapabilitiesConfig
+from google.antigravity import Agent, LocalAgentConfig, CapabilitiesConfig
 
-config = AgentConfig(
+config = LocalAgentConfig(
     system_instructions="You are a helpful assistant.",
     api_key="GEMINI_API_KEY",
     capabilities=CapabilitiesConfig(),
@@ -106,9 +106,9 @@ asyncio.run(main())
 Pass rich multimedia file attachments (images, videos, audio, and documents) to the agent alongside textual instruction prompt lists:
 
 ```python
-from google.antigravity import Agent, AgentConfig, Part
+from google.antigravity import Agent, LocalAgentConfig, Part
 
-config = AgentConfig(system_instructions="You are an expert software architect.")
+config = LocalAgentConfig(system_instructions="You are an expert software architect.")
 async with Agent(config) as agent:
     # Load local multimedia assets seamlessly via Part.from_file
     image_part = Part.from_file("diagram.png", description="System design chart")
@@ -128,7 +128,7 @@ def get_weather(city: str) -> str:
     """Returns the current weather for a city."""
     return f"It's sunny in {city}."
 
-config = AgentConfig(
+config = LocalAgentConfig(
     system_instructions="You are a helpful assistant.",
     tools=[get_weather],
 )
@@ -142,9 +142,9 @@ Connect to external [MCP](https://modelcontextprotocol.io/) servers and expose
 their tools to the agent:
 
 ```python
-from google.antigravity import Agent, AgentConfig
+from google.antigravity import Agent, LocalAgentConfig
 
-config = AgentConfig(
+config = LocalAgentConfig(
     system_instructions="You are a helpful assistant.",
     mcp_servers=[{"type": "stdio", "command": "npx", "args": ["my-mcp-server"]}],
 )
@@ -157,7 +157,7 @@ async with Agent(config) as agent:
 Control agent behavior with a declarative policy system:
 
 ```python
-from google.antigravity import Agent, AgentConfig, CapabilitiesConfig
+from google.antigravity import Agent, LocalAgentConfig, CapabilitiesConfig
 from google.antigravity.hooks.policy import deny, allow, ask_user, enforce
 
 policies = [
@@ -166,7 +166,7 @@ policies = [
     ask_user("run_command", handler=my_handler),  # Ask before running commands
 ]
 
-config = AgentConfig(
+config = LocalAgentConfig(
     system_instructions="You are a helpful assistant.",
     capabilities=CapabilitiesConfig(),
     policies=policies,
@@ -181,13 +181,13 @@ Run background tasks that react to external events and push messages into the
 agent:
 
 ```python
-from google.antigravity import Agent, AgentConfig
+from google.antigravity import Agent, LocalAgentConfig
 from google.antigravity.triggers import every
 
 async def check_status(ctx):
     await ctx.send("Check the deployment status.")
 
-config = AgentConfig(
+config = LocalAgentConfig(
     system_instructions="You are a helpful assistant.",
     triggers=[every(60, check_status)],
 )

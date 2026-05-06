@@ -39,7 +39,7 @@ import asyncio
 import logging
 
 from google.antigravity.agent import Agent
-from google.antigravity.agent import AgentConfig
+from google.antigravity.connections.local_connection import LocalAgentConfig
 from google.antigravity.triggers import helpers
 from google.antigravity.triggers import triggers as triggers_module
 
@@ -210,7 +210,7 @@ async def main() -> None:
 
   agents: dict[str, Agent] = {}
   for name, instructions in _AGENT_CONFIGS.items():
-    config = AgentConfig(
+    config = LocalAgentConfig(
         system_instructions=instructions,
         tools=[pass_turn],
         triggers=[helpers.every(60, _moderator_nudge)],

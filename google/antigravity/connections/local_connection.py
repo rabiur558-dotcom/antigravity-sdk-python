@@ -24,6 +24,7 @@ import os
 import shutil
 import struct
 import subprocess
+import tempfile
 import threading
 import typing
 from typing import Any, AsyncIterator, Callable
@@ -39,6 +40,77 @@ from google.antigravity.connections import localharness_pb2
 from google.antigravity.hooks import hook_runner as h_runner
 from google.antigravity.hooks import hooks
 from google.antigravity.tools import tool_runner as t_runner
+
+
+class LocalAgentConfig(connection.AgentConfig):
+  """Configuration for the local harness backend.
+
+  This is the default config for the Agent class. It uses the
+  Go-based localharness binary.
+  """
+
+  gemini_config: types.GeminiConfig = pydantic.Field(
+      default_factory=types.GeminiConfig
+  )
+
+  # Top-level shorthand fields — flow into gemini_config.
+  model: str | None = None
+  api_key: str | None = None
+
+  @pydantic.model_validator(mode="after")
+  def _apply_shorthand_configs(self) -> "LocalAgentConfig":
+    """Applies top-level shorthand fields (model, api_key) to gemini_config."""
+    # Defensive copy: prevent mutation of shared GeminiConfig instances.
+    self.gemini_config = self.gemini_config.model_copy(deep=True)
+
+    if self.model is not None:
+      if "default" in self.gemini_config.models.model_fields_set:
+        raise ValueError(
+            "Cannot set both 'model' shorthand and "
+            "'gemini_config.models.default'. Use one or the other."
+        )
+      self.gemini_config.models.default = types.ModelEntry(name=self.model)
+    if self.api_key is not None:
+      if self.gemini_config.api_key is not None:
+        raise ValueError(
+            "Cannot set both 'api_key' shorthand and "
+            "'gemini_config.api_key'. Use one or the other."
+        )
+      self.gemini_config.api_key = self.api_key
+    return self
+
+  def create_strategy(
+      self,
+      *,
+      tool_runner: Any,
+      hook_runner: Any,
+  ) -> "LocalConnectionStrategy":
+    if isinstance(self.system_instructions, str):
+      si = types.TemplatedSystemInstructions(
+          sections=[
+              types.SystemInstructionSection(content=self.system_instructions)
+          ]
+      )
+    else:
+      si = self.system_instructions
+
+    save_dir = self.save_dir
+    if save_dir is None:
+      save_dir = tempfile.mkdtemp(prefix="antigravity_")
+      logging.info("No save_dir specified; using %s", save_dir)
+
+    return LocalConnectionStrategy(
+        tool_runner=tool_runner,
+        hook_runner=hook_runner,
+        gemini_config=self.gemini_config,
+        system_instructions=si,
+        capabilities_config=self.capabilities,
+        conversation_id=self.conversation_id,
+        save_dir=save_dir,
+        workspaces=self.workspaces,
+        skills_paths=self.skills_paths,
+    )
+
 
 resources = None
 
@@ -1225,16 +1297,17 @@ class LocalConnectionStrategy(connection.ConnectionStrategy):
   def __init__(
       self,
       *,
-      binary_path: str | None = None,
       tool_runner: t_runner.ToolRunner | None = None,
       hook_runner: h_runner.HookRunner | None = None,
       gemini_config: str | types.GeminiConfig | None = None,
       skills_paths: list[str] | None = None,
       system_instructions: str | types.SystemInstructions | None = None,
       capabilities_config: types.CapabilitiesConfig | None = None,
-      session_config: types.SessionConfig | None = None,
+      conversation_id: str | None = None,
+      save_dir: str | None = None,
+      workspaces: list[str] | None = None,
   ):
-    self._binary_path = binary_path or _get_default_binary_path()
+    self._binary_path = _get_default_binary_path()
     self._tool_runner = tool_runner
     self._hook_runner = hook_runner
 
@@ -1257,7 +1330,9 @@ class LocalConnectionStrategy(connection.ConnectionStrategy):
     self._capabilities_config = (
         capabilities_config or types.CapabilitiesConfig()
     )
-    self._session_config = session_config or types.SessionConfig()
+    self._conversation_id = conversation_id
+    self._save_dir = save_dir
+    self._workspaces = workspaces or []
 
   def _build_harness_config(self) -> localharness_pb2.HarnessConfig:
     """Translates Pydantic config objects into a HarnessConfig proto."""
@@ -1315,7 +1390,7 @@ class LocalConnectionStrategy(connection.ConnectionStrategy):
                 directory=p
             )
         )
-        for p in (self._session_config.workspaces or [])
+        for p in self._workspaces
     ]
 
     cfg = self._capabilities_config
@@ -1366,7 +1441,7 @@ class LocalConnectionStrategy(connection.ConnectionStrategy):
     harness_config = localharness_pb2.HarnessConfig(
         tools=tool_protos,
         system_instructions=system_instructions_proto,
-        cascade_id=self._session_config.conversation_id or "",
+        cascade_id=self._conversation_id or "",
         gemini_config=gemini_config_proto,
         workspaces=workspace_protos,
         skills_paths=self._skills_paths or [],
@@ -1403,7 +1478,7 @@ class LocalConnectionStrategy(connection.ConnectionStrategy):
 
     harness_config = self._build_harness_config()
     input_config = localharness_pb2.InputConfig(
-        storage_directory=self._session_config.save_dir or "",
+        storage_directory=self._save_dir or "",
     )
 
     process = subprocess.Popen(

@@ -20,7 +20,7 @@ import logging
 import os
 from google.antigravity import types
 from google.antigravity.agent import Agent
-from google.antigravity.agent import AgentConfig
+from google.antigravity.connections.local_connection import LocalAgentConfig
 from google.antigravity.hooks import cli
 from google.antigravity.hooks import hooks
 from google.antigravity.hooks import policy
@@ -126,12 +126,12 @@ async def main():
   )
 
   print("Creating Doc Maintenance Agent...")
-  config = AgentConfig(
+  config = LocalAgentConfig(
       system_instructions=system_instructions,
       policies=policies,
       hooks=[PrintToolCallHook()],
       capabilities=types.CapabilitiesConfig(),
-      session_config=types.SessionConfig(workspaces=[target_dir]),
+      workspaces=[target_dir],
   )
   async with Agent(config) as agent:
 

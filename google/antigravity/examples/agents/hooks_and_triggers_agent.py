@@ -19,7 +19,7 @@ import logging
 from typing import Any
 from google.antigravity import types
 from google.antigravity.agent import Agent
-from google.antigravity.agent import AgentConfig
+from google.antigravity.connections.local_connection import LocalAgentConfig
 from google.antigravity.hooks import hooks
 from google.antigravity.triggers import triggers as triggers_module
 from google.antigravity.triggers.helpers import every
@@ -51,7 +51,7 @@ async def main():
   my_trigger = every(5, ping_callback)
 
   print("Creating agent...")
-  config = AgentConfig(
+  config = LocalAgentConfig(
       system_instructions="You are a helpful assistant.",
       hooks=[my_hook],
       triggers=[my_trigger],

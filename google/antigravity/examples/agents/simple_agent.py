@@ -24,14 +24,14 @@ Criteria for correct script performance:
 import asyncio
 import logging
 from google.antigravity.agent import Agent
-from google.antigravity.agent import AgentConfig
+from google.antigravity.connections.local_connection import LocalAgentConfig
 
 
 async def main():
   logging.basicConfig(level=logging.INFO)
 
   print("Creating agent...")
-  config = AgentConfig(
+  config = LocalAgentConfig(
       system_instructions="You are a helpful assistant.",
   )
   async with Agent(config) as agent:

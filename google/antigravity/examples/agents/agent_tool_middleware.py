@@ -40,7 +40,7 @@ from typing import Any, Optional
 
 from google.antigravity import types
 from google.antigravity.agent import Agent
-from google.antigravity.agent import AgentConfig
+from google.antigravity.connections.local_connection import LocalAgentConfig
 from google.antigravity.hooks import hooks
 
 # ---------------------------------------------------------------------------
@@ -87,7 +87,6 @@ async def send_to_unknown(name: str, message: str) -> str:
     ValueError: If the name cannot be resolved to an email.
   """
   raise ValueError(f"Could not resolve '{name}' to an email address")
-
 
 
 # ---------------------------------------------------------------------------
@@ -201,7 +200,7 @@ async def main() -> None:
   fallback_hook = FallbackHook()
 
   agent = Agent(
-      AgentConfig(
+      LocalAgentConfig(
           system_instructions=(
               "You are a helpful assistant with access to user lookup,"
               " notification, and diagnostic tools. Use them as needed."

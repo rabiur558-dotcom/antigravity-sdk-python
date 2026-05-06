@@ -22,7 +22,7 @@ import tempfile
 
 from google.antigravity import types
 from google.antigravity.agent import Agent
-from google.antigravity.agent import AgentConfig
+from google.antigravity.connections.local_connection import LocalAgentConfig
 from google.antigravity.hooks import policy
 
 
@@ -56,7 +56,7 @@ async def main():
     })
 
   print("Creating agent...")
-  config = AgentConfig(
+  config = LocalAgentConfig(
       system_instructions=(
           "You are a helpful assistant. Use your tools when needed."
       ),

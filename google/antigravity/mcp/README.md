@@ -11,10 +11,11 @@ The `mcp` package provides integration with the Model Context Protocol (MCP), al
 Supported connection types:
 - **stdio**: For connecting to local MCP servers running as subprocesses.
 - **SSE (Server-Sent Events)**: For connecting to remote MCP servers over HTTP.
+- **Streamable HTTP**: For connecting to remote MCP servers with advanced timeout and connection management.
 
-### `register_mcp_tools`
+### `get_mcp_tools`
 
-A helper function that fetches tools from an MCP `ClientSessionGroup` and registers them as tools in a `ToolRunner`. It wraps MCP tools so they can be called like regular Python functions by the `ToolRunner`.
+A helper function that fetches tools from an MCP `ClientSessionGroup` and returns them as `ToolWithSchema` objects.
 
 ## Usage Example
 
@@ -23,7 +24,7 @@ from google.antigravity.mcp.bridge import McpBridge
 from google.antigravity.tools.tool_runner import ToolRunner
 
 tool_runner = ToolRunner()
-bridge = McpBridge(tool_runner)
+bridge = McpBridge()
 
 # Connect to a local MCP server
 await bridge.connect_stdio(
@@ -40,4 +41,4 @@ await bridge.stop()
 
 ## Files
 
-- `bridge.py`: Defines `McpBridge` and `register_mcp_tools`.
+- `bridge.py`: Defines `McpBridge` and `get_mcp_tools`.

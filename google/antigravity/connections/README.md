@@ -54,7 +54,7 @@ connections/
 ├── connection.py            # ABCs: Connection, ConnectionStrategy, AgentConfig
 ├── connection_test.py
 ├── README.md
-└── local_connection/        # LocalConnection strategy
+└── local/        # LocalConnection strategy
     ├── __init__.py           # Re-exports public API
     ├── local_connection.py   # LocalConnection, LocalConnectionStrategy
     ├── local_connection_config.py  # LocalAgentConfig
@@ -68,7 +68,7 @@ pattern. For example, a remote connection strategy would go in
 
 ## Implementations
 
-### `LocalConnection` (`local_connection/`)
+### `LocalConnection` (`local/`)
 
 `LocalConnection` (and its corresponding `LocalConnectionStrategy`) connects to
 a Go-based local harness.
@@ -88,7 +88,7 @@ a Go-based local harness.
 ## Usage Example
 
 ```python
-from google.antigravity.connections.local_connection import LocalConnectionStrategy
+from google.antigravity.connections.local import LocalConnectionStrategy
 from google.antigravity.types import GeminiConfig
 
 strategy = LocalConnectionStrategy(
@@ -108,7 +108,7 @@ async with strategy:
 
 - `connection.py`: Defines `Connection`, `ConnectionStrategy`, and
   `AgentConfig` interfaces.
-- `local_connection/`: Local harness connection strategy package.
+- `local/`: Local harness connection strategy package.
   - `local_connection.py`: Implements `LocalConnection` and
     `LocalConnectionStrategy`.
   - `local_connection_config.py`: Implements `LocalAgentConfig`.

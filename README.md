@@ -106,7 +106,7 @@ state introspection:
 
 ```python
 import asyncio
-from google.antigravity.connections.local_connection import LocalConnectionStrategy
+from google.antigravity.connections.local import LocalConnectionStrategy
 from google.antigravity.conversation.conversation import Conversation
 from google.antigravity.tools.tool_runner import ToolRunner
 from google.antigravity.types import GeminiConfig
@@ -147,7 +147,8 @@ Pass rich multimedia file attachments (images, videos, audio, and documents) to 
 You can attach assets **directly using content classes** (perfect for in-memory bytes) or **conveniently from a filesystem path** (which automatically resolves types and guesses MIME formats):
 
 ```python
-from google.antigravity import Agent, LocalAgentConfig, Image, from_file
+from google.antigravity import Agent, LocalAgentConfig
+from google.antigravity.types import Image, from_file
 
 config = LocalAgentConfig(system_instructions="You are an expert software architect.")
 async with Agent(config) as agent:
@@ -254,7 +255,7 @@ The SDK follows a three-layer architecture:
 | Layer | Purpose | Key Classes |
 |:------|:--------|:------------|
 | **Layer 1** — Simplified | High-level, batteries-included entry point | `Agent` |
-| **Layer 2** — Session | Stateful session with history and convenience methods | `Conversation`, `ChatResponse`, `Step`, `ToolCall`, `HookRunner`, `ToolRunner`, `TriggerRunner` |
+| **Layer 2** — Session | Stateful session with history and convenience methods | `Conversation`, `ChatResponse`, `Step`, `ToolCall`, `AgentConfig`, `HookRunner`, `ToolRunner`, `TriggerRunner` |
 | **Layer 3** — Adapter | Transport and backend abstraction | `Connection`, `ConnectionStrategy`, `LocalConnection` |
 
 ## Component Documentation

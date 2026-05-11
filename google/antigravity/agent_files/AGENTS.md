@@ -36,7 +36,7 @@ async def main():
     )
     async with Agent(config) as agent:
         response = await agent.chat("What files are in the current directory?")
-        print(response)
+        print(await response.text())
 
 asyncio.run(main())
 ```
@@ -70,7 +70,7 @@ from google.antigravity.hooks.policy import deny, allow, ask_user
 policies = [
     deny("*"),                          # Block all tools by default
     allow("view_file"),                 # Allow reading files
-    ask_user("run_command"),            # Ask before running commands
+    ask_user("run_command", handler=my_handler),  # Ask before running commands
 ]
 
 config = AgentConfig(

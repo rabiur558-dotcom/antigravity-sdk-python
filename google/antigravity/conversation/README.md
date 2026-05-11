@@ -24,7 +24,7 @@ Key features:
 
 ```python
 from google.antigravity.conversation.conversation import Conversation
-from google.antigravity.connections.local_connection import LocalConnectionStrategy
+from google.antigravity.connections.local import LocalConnectionStrategy
 from google.antigravity import types
 
 strategy = LocalConnectionStrategy(...)

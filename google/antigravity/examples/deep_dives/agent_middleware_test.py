@@ -23,7 +23,7 @@ verifying hook behavior before wiring it into an agent.
 import unittest
 
 from google.antigravity import types
-from google.antigravity.examples.agents import agent_tool_middleware as m
+from google.antigravity.examples.deep_dives import agent_middleware as m
 from google.antigravity.hooks import hooks
 
 

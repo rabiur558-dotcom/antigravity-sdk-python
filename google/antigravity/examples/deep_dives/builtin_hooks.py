@@ -28,7 +28,7 @@ Observing model responses:
   full step-by-step trajectory.
 
 To run:
-  python3 builtin_hooks_example.py
+  python3 builtin_hooks.py
 """
 
 import asyncio

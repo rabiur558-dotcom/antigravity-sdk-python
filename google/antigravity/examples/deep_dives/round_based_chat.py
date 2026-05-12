@@ -28,11 +28,11 @@ Design note: we use agent.chat() in parallel via asyncio.gather rather
 than a purely trigger-driven model. TriggerContext.send() delivers
 messages and returns the response, but it bypasses Agent.chat() and
 operates on the Connection directly. The agent.chat() approach gives us
-explicit round management and prompt injection. See agent_async_chat.py
+explicit round management and prompt injection. See async_chat.py
 for a fully reactive alternative using asyncio.Condition.
 
 Run:
-    python agent_chat_room.py
+    python round_based_chat.py
 """
 
 import asyncio

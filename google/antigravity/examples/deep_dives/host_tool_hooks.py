@@ -41,7 +41,7 @@ Observing model responses:
   for the full step-by-step trajectory.
 
 To run:
-  python3 lifecycle_hooks_example.py
+  python3 host_tool_hooks.py
 
 Criteria for correct script performance:
   1. The script exits cleanly with return code 0 (no unhandled exceptions).

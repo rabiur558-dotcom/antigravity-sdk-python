@@ -25,7 +25,7 @@ ChatResponse also exposes `.thoughts`, `.tool_calls`, and `.chunks` iterators
 for advanced use cases — see the module docstring on ChatResponse for details.
 
 To run:
-  python3 streaming_content_example.py
+  python3 delta_streaming.py
 """
 
 import asyncio

@@ -14,7 +14,7 @@
 
 """Fully async peer-to-peer agent chat — no rounds.
 
-Contrast with agent_chat_room.py which uses synchronized parallel
+Contrast with round_based_chat.py which uses synchronized parallel
 rounds via asyncio.gather. Here, each agent runs its own independent
 loop and reacts whenever any peer posts a new message. Ordering is
 emergent — whoever finishes agent.chat() first gets the next word.
@@ -30,7 +30,7 @@ Trade-offs vs. the round-based model:
 - Con: agents may not see every message before responding.
 
 Run:
-    python agent_async_chat.py
+    python async_chat.py
 """
 
 import asyncio

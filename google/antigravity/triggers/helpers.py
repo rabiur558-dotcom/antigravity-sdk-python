@@ -25,7 +25,10 @@ from typing import Awaitable, Callable, Sequence
 from google.antigravity import types
 from google.antigravity.triggers import triggers as triggers_module
 
-# Mapping from watchfiles change type values to our FileChangeKind enum.
+# Mapping from watchfiles.Change enum int values to our FileChangeKind.
+# Values are hardcoded because watchfiles is lazily imported (only when
+# on_file_change is actually used). See: watchfiles.Change.added (1),
+# .modified (2), .deleted (3).
 _WATCHFILES_CHANGE_MAP = {
     1: types.FileChangeKind.ADDED,
     2: types.FileChangeKind.MODIFIED,

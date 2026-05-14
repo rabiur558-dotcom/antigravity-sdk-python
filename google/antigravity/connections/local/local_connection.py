@@ -25,7 +25,7 @@ import shutil
 import struct
 import subprocess
 import threading
-from typing import Any, AsyncIterator, Callable, NamedTuple
+from typing import Any, AsyncIterator, Callable, NamedTuple, cast
 
 from google.genai import types as genai_types
 from google.protobuf import json_format
@@ -110,6 +110,10 @@ _BUILTIN_TOOL_PROTO_FIELDS: dict[types.BuiltinTools, str] = {
 # known BuiltinTools proto field. This represents a pre-request notification
 # from the Connection for a host-side tool whose specific call will follow.
 DEFAULT_HOST_TOOL_NAME = "pre_request_host_tool_request"
+
+
+_IDLE_SENTINEL = object()
+_CLOSE_SENTINEL = None
 
 
 class _PendingCallKey(NamedTuple):
@@ -510,11 +514,14 @@ class LocalConnection(connection.Connection):
 
       step_obj = await self._step_queue.get()
 
+      if step_obj is _IDLE_SENTINEL:
+        continue
       if step_obj is None:
         return
       if isinstance(step_obj, Exception):
         raise step_obj
 
+      step_obj = cast(LocalConnectionStep, step_obj)
       yield step_obj
 
       is_from_model = step_obj.source == types.StepSource.MODEL
@@ -538,9 +545,12 @@ class LocalConnection(connection.Connection):
 
   async def wait_for_idle(self) -> None:
     """Blocks until the connection becomes idle."""
-    # Drain all pending steps
-    async for _ in self.receive_steps():
-      pass
+    await self._is_idle.wait()
+    while not self._step_queue.empty():
+      try:
+        self._step_queue.get_nowait()
+      except asyncio.QueueEmpty:
+        break
 
   def _start_stderr_reader(self, stderr_stream) -> None:
     """Starts a background daemon thread that drains the harness stderr.
@@ -838,7 +848,9 @@ class LocalConnection(connection.Connection):
             # The connection is idle when the parent trajectory is idle
             # and all subagent trajectories have completed.
             if self._parent_idle and not self._active_subagent_ids:
-              self._is_idle.set()
+              if not self._is_idle.is_set():
+                self._is_idle.set()
+                await self._step_queue.put(_IDLE_SENTINEL)
         elif event.HasField("tool_call"):
           self._run_in_background(self._handle_tool_call(event.tool_call))
     except websockets.ConnectionClosed as e:
@@ -862,7 +874,7 @@ class LocalConnection(connection.Connection):
           types.AntigravityConnectionError(f"Error in reader loop: {e}")
       )
     finally:
-      await self._step_queue.put(None)  # Send sentinel
+      await self._step_queue.put(_CLOSE_SENTINEL)  # Send sentinel
 
   async def _handle_question_request(
       self, step_update: localharness_pb2.StepUpdate

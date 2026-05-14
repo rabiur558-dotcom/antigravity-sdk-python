@@ -829,6 +829,57 @@ class LocalConnectionTest(unittest.IsolatedAsyncioTestCase):
 
     self.assertEqual(actual_properties, expected_properties)
 
+  async def test_wait_for_idle_does_not_deadlock(self):
+    """Verifies that wait_for_idle completes when the connection goes idle.
+
+    This test reproduces a bug where wait_for_idle blocks indefinitely if the
+    connection becomes idle while receive_steps is awaiting the step queue.
+    It also verifies that wait_for_idle supports multiple concurrent callers.
+    """
+    harness = self._make_harness()
+    harness.conn._cascade_id = "parent_traj"
+    harness.conn._is_idle.clear()
+    harness.conn._parent_idle = False
+
+    # 1. Send an active step update
+    await harness.send_event(
+        localharness_pb2.OutputEvent(
+            step_update=localharness_pb2.StepUpdate(
+                cascade_id="parent_traj",
+                trajectory_id="parent_traj",
+                step_index=1,
+                text="Hello",
+                state=localharness_pb2.StepUpdate.STATE_ACTIVE,
+                source=localharness_pb2.StepUpdate.SOURCE_MODEL,
+            )
+        )
+    )
+
+    # Start multiple wait_for_idle tasks concurrently to verify they all unblock
+    wait_task_1 = asyncio.create_task(harness.conn.wait_for_idle())
+    wait_task_2 = asyncio.create_task(harness.conn.wait_for_idle())
+
+    # Give tasks time to block
+    await asyncio.sleep(0.1)
+
+    # 2. Send trajectory_state_update indicating parent went idle
+    await harness.send_event(
+        localharness_pb2.OutputEvent(
+            trajectory_state_update=localharness_pb2.TrajectoryStateUpdate(
+                trajectory_id="parent_traj",
+                state=localharness_pb2.TrajectoryStateUpdate.State.STATE_IDLE,
+            )
+        )
+    )
+
+    # 3. Wait for all wait_tasks to finish with a timeout.
+    try:
+      await asyncio.wait_for(
+          asyncio.gather(wait_task_1, wait_task_2), timeout=2.0
+      )
+    except asyncio.TimeoutError:
+      self.fail("wait_for_idle deadlocked!")
+
 
 class LocalConnectionStepFromDictTest(unittest.TestCase):
   """Tests for LocalConnectionStep.from_dict derivation logic.

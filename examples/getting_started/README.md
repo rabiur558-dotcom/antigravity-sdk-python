@@ -59,7 +59,7 @@ Handling complex inputs and enforcing strict data outputs.
 Extending agent capabilities and orchestrating multi-agent workflows.
 * [custom_tools.py](custom_tools.py): Defining stateful Python functions as tools using `ToolContext`.
 * [agent_skills.py](agent_skills.py): Discovering and loading domain-specific skills from the filesystem (`SKILL.md`).
-* [mcp.py](mcp.py): Connecting to external toolsets via the Model Context Protocol (MCP).
+* [mcp_tools.py](mcp_tools.py): Connecting to external toolsets via the Model Context Protocol (MCP).
 * [subagents.py](subagents.py): Spawning and delegating specialized tasks to sub-agents.
 
 ### ⚙️ Lifecycle, Proactivity, & Observability

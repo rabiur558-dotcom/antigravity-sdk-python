@@ -71,7 +71,7 @@ relevant information.
     to spawn and orchestrate subagents for complex tasks, read
     `examples/getting_started/subagents.md`.
 -   If the user needs to connect an agent to external services via MCP (Stdio or
-    SSE), read `examples/getting_started/mcp.md`.
+    SSE), read `examples/getting_started/mcp_tools.md`.
 -   If the user needs to create proactive agents that respond to time-based
     events or file system triggers in the background, read
     `examples/getting_started/periodic_trigger.md`.

@@ -13,7 +13,7 @@ that expose tools, resources, and prompts. The Google Antigravity SDK supports
 integrating MCP servers to extend the capabilities of your custom agents.
 
 For a concrete code example of setting up and using MCP, see
-[mcp.md](../../examples/getting_started/mcp.md).
+[mcp_tools.md](../../examples/getting_started/mcp_tools.md).
 
 ## Configuration Modes
 

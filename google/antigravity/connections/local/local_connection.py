@@ -1430,7 +1430,7 @@ class LocalConnectionStrategy(connection.ConnectionStrategy):
         workspaces=workspace_protos,
         skills_paths=self._skills_paths or [],
         harness_side_tools=harness_side_tools,
-        # 0 tells the harness to use its default (30000 tokens).
+        # 0 tells the harness to use its default (50000 tokens).
         compaction_threshold=cfg.compaction_threshold or 0,
         finish_tool_schema_json=cfg.finish_tool_schema_json or "",
     )
